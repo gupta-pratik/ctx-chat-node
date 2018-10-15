@@ -13,7 +13,7 @@ const app = dialogflow({
   clientId: 'podiovoiceassistant'
 });
 
-var http = require('http');
+var http = require('https');
 
 const host = 'api.podio.com';
 
@@ -57,7 +57,7 @@ app.intent('GetMeetingSchedule', (conv) => {
 
 function getAppointments(authToken) {
   var options = {
-    hostname: 'https://api.podio.com',
+    hostname: host,
     path: '/calendar/summary',
     method: 'POST',
     headers: {
@@ -86,6 +86,7 @@ function callAppointments(authToken) {
   var options = {
     hostname: host,
     path: path,
+   // port: 8080,
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
