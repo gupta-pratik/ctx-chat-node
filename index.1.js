@@ -36,25 +36,19 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
   console.log('Dialogflow Request headers: ' + JSON.stringify(request.headers));
   console.log('Dialogflow Request body: ' + JSON.stringify(request.body));
 
-
-
-  function welcome() {
-    let conv = agent.conv();
+  function welcome(conv) {
     console.log('Prateek welcomeIntent from node');
-    console.log(conv);
-
+    console.log(agent);
     conv.ask(new SignIn('To get your account details'));
-    agent.add(conv);
   }
 
-  function fallback() {
+  function fallback(agent) {
     agent.add(`I didn't understand`);
     agent.add(`I'm sorry, can you try again?`);
   }
 
-  function signIn() {
+  function signIn(conv, params, signin) {
     console.log('Prateek signIn from node');
-    let conv = agent.conv();
     if (signin.status === 'OK') {
       console.log('userId', conv.user.raw.userId);
       console.log('P1 node');
@@ -65,7 +59,6 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
       console.log('not signed in');
       conv.ask(`I won't be able to save your data, but what do you want to do next?`);
     }
-    agent.add(conv);
   }
 
   // // Uncomment and edit to make your own intent handler
