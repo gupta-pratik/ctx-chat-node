@@ -114,7 +114,12 @@ function callAppointments(authToken) {
         // After all the data has been received parse the JSON for desired data
         let response = JSON.parse(body);
         // Resolve the promise with the output text
-        let output = `You have total ${response['upcoming']['total']} events`;
+        let events = '';
+        let event_arr = response['upcoming']['events'];
+        for (var i = 0; i < event_arr.length; i++)
+          events += event_arr[i]['app']['item_name'] +"@" + event_arr[i]['start'] + "\n";
+
+        let output = `You have total ${response['upcoming']['total']} events and top 5 events are: \n${events}`;
         resolve(output);
       });
       res.on('error', (error) => {
