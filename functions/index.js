@@ -56,50 +56,57 @@ function signIN(conv, params, signin){
   }
 }
 
-app_sf.intent('Create Folder', (conv) => {
-  return createSFFolder(conv.user.access.token).then((output) => {
-    conv.add('Folder created')
+app_sf.intent('Create Folder', (conv,params) => {
+  return createSFFolder(conv.user.access.token,params.any).then((output) => {
+    conv.add('Folder created');
   }); 
 });
 
 
-function createSFFolder(authToken) {
-  var item_id;
-  return getSFHome(authToken).then((response) => {
-    item_id = response['Id'];
-
-    let path = `/sf/v3/items(${item_id})/Folder?overwrite=true&passthrough=false`;
+function createSFFolder(authToken,folder_name) {
+  var item_id ='foh45431-c30d-419e-a862-e071df5a4dd6'; // Root Folder
+  let path = `/sf/v3/items(${item_id})/Folder?overwrite=true&passthrough=false`;
+    var body = JSON.stringify({ 
+      "Name": folder_name, 
+      "Description":"This is the test description", 
+      "ExpirationDate": "9999-12-31T23:59:59.9999999Z"
+    })
     var options = {
       hostname: sf_host,
       path: path,
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + authToken
-      }
+        'Authorization': 'Bearer ' + authToken,
+        "Content-Length": Buffer.byteLength(body)
+      },
     };
+    console.log('--------Prateek-------');
+    console.log('folder_name:'+ folder_name);
     return new Promise((resolve, reject) => {
       console.log('API Request: ' + sf_host + path);
 
       // Make the HTTP request to get the weather
       http.request(options, (res) => {
         let body = ''; // var to store the response chunks
+        
         res.on('data', (d) => {
           body += d;
         }); // store each response chunk
         res.on('end', () => {
           // After all the data has been received parse the JSON for desired data
-
+          let response = JSON.parse(body);
+          // Resolve the promise with the output text
+          console.log(response);
           resolve();
         });
+        
         res.on('error', (error) => {
           console.log(`Error calling the API: ${error}`);
           reject();
         });
-      });
+      }).write(body);
     });
-  })
-
 }
 
 app_sf.intent('DownloadContent', (conv) => {
