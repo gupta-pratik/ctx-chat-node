@@ -43,7 +43,7 @@ app_sf.intent('Get Sign In', (conv, params, signin) => {
   signIN(conv, params, signin);
 });
 
-function signIN(conv, params, signin){
+function signIN(conv, params, signin) {
   if (signin.status === 'OK') {
     console.log('userId', conv.user.raw.userId);
     console.log('P1');
@@ -56,57 +56,57 @@ function signIN(conv, params, signin){
   }
 }
 
-app_sf.intent('Create Folder', (conv,params) => {
-  return createSFFolder(conv.user.access.token,params.any).then((output) => {
+app_sf.intent('Create Folder', (conv, params) => {
+  return createSFFolder(conv.user.access.token, params.any).then((output) => {
     conv.add('Folder created');
-  }); 
+  });
 });
 
 
-function createSFFolder(authToken,folder_name) {
-  var item_id ='foh45431-c30d-419e-a862-e071df5a4dd6'; // Root Folder
+function createSFFolder(authToken, folder_name) {
+  var item_id = 'foh45431-c30d-419e-a862-e071df5a4dd6'; // Root Folder
   let path = `/sf/v3/items(${item_id})/Folder?overwrite=true&passthrough=false`;
-    var body = JSON.stringify({ 
-      "Name": folder_name, 
-      "Description":"This is the test description", 
-      "ExpirationDate": "9999-12-31T23:59:59.9999999Z"
-    })
-    var options = {
-      hostname: sf_host,
-      path: path,
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + authToken,
-        "Content-Length": Buffer.byteLength(body)
-      },
-    };
-    console.log('--------Prateek-------');
-    console.log('folder_name:'+ folder_name);
-    return new Promise((resolve, reject) => {
-      console.log('API Request: ' + sf_host + path);
+  var body = JSON.stringify({
+    "Name": folder_name,
+    "Description": "This is the test description",
+    "ExpirationDate": "9999-12-31T23:59:59.9999999Z"
+  })
+  var options = {
+    hostname: sf_host,
+    path: path,
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + authToken,
+      "Content-Length": Buffer.byteLength(body)
+    },
+  };
+  console.log('--------Prateek-------');
+  console.log('folder_name:' + folder_name);
+  return new Promise((resolve, reject) => {
+    console.log('API Request: ' + sf_host + path);
 
-      // Make the HTTP request to get the weather
-      http.request(options, (res) => {
-        let body = ''; // var to store the response chunks
-        
-        res.on('data', (d) => {
-          body += d;
-        }); // store each response chunk
-        res.on('end', () => {
-          // After all the data has been received parse the JSON for desired data
-          let response = JSON.parse(body);
-          // Resolve the promise with the output text
-          console.log(response);
-          resolve();
-        });
-        
-        res.on('error', (error) => {
-          console.log(`Error calling the API: ${error}`);
-          reject();
-        });
-      }).write(body);
-    });
+    // Make the HTTP request to get the weather
+    http.request(options, (res) => {
+      let body = ''; // var to store the response chunks
+
+      res.on('data', (d) => {
+        body += d;
+      }); // store each response chunk
+      res.on('end', () => {
+        // After all the data has been received parse the JSON for desired data
+        let response = JSON.parse(body);
+        // Resolve the promise with the output text
+        console.log(response);
+        resolve();
+      });
+
+      res.on('error', (error) => {
+        console.log(`Error calling the API: ${error}`);
+        reject();
+      });
+    }).write(body);
+  });
 }
 
 app_sf.intent('DownloadContent', (conv) => {
@@ -120,19 +120,19 @@ app_sf.intent('DownloadContent', (conv) => {
       })
     }));
   });
-    
+
 });
 
-async function getDownloadUrl(authToken,item_id){
-  let path = 'https://'+sf_host+`/sf/v3/items(${item_id})/Download?includeallversions=false&includeDeleted=false&redirect=false`;
-  console.log('url:'+path);
+async function getDownloadUrl(authToken, item_id) {
+  let path = 'https://' + sf_host + `/sf/v3/items(${item_id})/Download?includeallversions=false&includeDeleted=false&redirect=false`;
+  console.log('url:' + path);
   const options = {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer ' + authToken
     },
-    url:path,
+    url: path,
   }
   try {
     return await axios(options)
@@ -168,7 +168,7 @@ async function downloadFileSFContent(authToken, item_id) {
         console.log(response)
 
         let url = response['DownloadUrl'];
-      
+
         let output = url;
         resolve(output);
       });
@@ -184,53 +184,53 @@ async function downloadFileSFContent(authToken, item_id) {
 function downloadSFContent(authToken) {
   var item_id;
   return getSFHome(authToken).then((response) => {
-    item_id = response['Id'];
+      item_id = response['Id'];
 
-    let path = `/sf/v3/items(${item_id})/Download?includeallversions=false&includeDeleted=false&redirect=false`;
-    var options = {
-      hostname: sf_host,
-      path: path,
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + authToken
-      }
-    };
-    return new Promise((resolve, reject) => {
-      console.log('API Request: ' + sf_host + path);
+      let path = `/sf/v3/items(${item_id})/Download?includeallversions=false&includeDeleted=false&redirect=false`;
+      var options = {
+        hostname: sf_host,
+        path: path,
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + authToken
+        }
+      };
+      return new Promise((resolve, reject) => {
+        console.log('API Request: ' + sf_host + path);
 
-      // Make the HTTP request to get the weather
-      http.get(options, (res) => {
-        let body = ''; // var to store the response chunks
-        res.on('data', (d) => {
-          body += d;
-        }); // store each response chunk
-        res.on('end', () => {
-          // After all the data has been received parse the JSON for desired data
-          let response = JSON.parse(body);
-          // Resolve the promise with the output text
-          console.log(response)
+        // Make the HTTP request to get the weather
+        http.get(options, (res) => {
+          let body = ''; // var to store the response chunks
+          res.on('data', (d) => {
+            body += d;
+          }); // store each response chunk
+          res.on('end', () => {
+            // After all the data has been received parse the JSON for desired data
+            let response = JSON.parse(body);
+            // Resolve the promise with the output text
+            console.log(response)
 
-          let url = response['DownloadUrl'];
-        
-          let output = url;
-          resolve(output);
+            let url = response['DownloadUrl'];
+
+            let output = url;
+            resolve(output);
+          });
+          res.on('error', (error) => {
+            console.log(`Error calling the API: ${error}`);
+            reject();
+          });
         });
+      });
+    })
+    .catch(() => {
+      return new Promise((resolve, reject) => {
         res.on('error', (error) => {
           console.log(`Error calling the API: ${error}`);
           reject();
         });
       });
     });
-  })
-    .catch(() => {
-    return new Promise((resolve, reject) => { 
-      res.on('error', (error) => {
-        console.log(`Error calling the API: ${error}`);
-        reject();
-      });
-    });
-  });
 }
 
 app_sf.intent('SearchFile', async (conv, params) => {
@@ -240,20 +240,29 @@ app_sf.intent('SearchFile', async (conv, params) => {
     console.log(o);
     let output = o;
     var arr = [];
-    for (let i = 0; i < output["Results"].length ; i++) {
-      var res = await getDownloadUrl(conv.user.access.token,output["Results"][i]["ItemID"]);
-      console.log('Download Url'+ res.data.DownloadUrl);
-      arr.push(
-        new BrowseCarouselItem({
-          title: output["Results"][i]["DisplayName"],
-          url: res.data.DownloadUrl,
-          description: `Creator name: ${output["Results"][i]["CreatorName"]} & Item Id:${output["Results"][i]["ItemID"]}`,
-        })
-      );
+    if (output["Results"].length > 0) {
+      for (let i = 0; i < output["Results"].length; i++) {
+        var res = await getDownloadUrl(conv.user.access.token, output["Results"][i]["ItemID"]);
+        if (res && res.data) {
+          console.log('Download Url' + res.data.DownloadUrl);
+          arr.push(
+            new BrowseCarouselItem({
+              title: output["Results"][i]["DisplayName"],
+              url: res.data.DownloadUrl,
+              description: `Creator name: ${output["Results"][i]["CreatorName"]} & Item Id:${output["Results"][i]["ItemID"]}`,
+            })
+          );
+        }
+      }
+      conv.add(new BrowseCarousel({
+        items: arr,
+      }));
     }
-    conv.add(new BrowseCarousel({
-      items: arr,
-    }));
+    else{
+      conv.json({
+        'fulfillmentText': `Sorry no file found with given name`
+      });
+    }
   });
 });
 
@@ -298,18 +307,18 @@ function searchSFContent(authToken, query) {
 app_sf.intent('GetHomeFolder', (conv) => {
   console.log('testing')
   return getSFHome(conv.user.access.token).then((response) => {
-    let folder_name = response['Name'];
-    
-    let output = `Parent folder name is ${folder_name}`;
-    conv.json({
-      'fulfillmentText': output
-    }); // Return the results of the weather API to Dialogflow
-  })
+      let folder_name = response['Name'];
+
+      let output = `Parent folder name is ${folder_name}`;
+      conv.json({
+        'fulfillmentText': output
+      }); // Return the results of the weather API to Dialogflow
+    })
     .catch(() => {
-    conv.json({
-      'fulfillmentText': `Sorry can't fetch your parent folder`
+      conv.json({
+        'fulfillmentText': `Sorry can't fetch your parent folder`
+      });
     });
-  });
 });
 
 function getSFHome(authToken) {
@@ -348,17 +357,17 @@ function getSFHome(authToken) {
   });
 }
 
-app_podio.intent('GetMeetingSchedule', (conv) => {
+app_sf.intent('GetMeetingSchedule', (conv) => {
   return getMeetings(conv.user.access.token).then((output) => {
-    conv.json({
-      'fulfillmentText': output
-    }); // Return the results of the weather API to Dialogflow
-  })
+      conv.json({
+        'fulfillmentText': output
+      }); // Return the results of the weather API to Dialogflow
+    })
     .catch(() => {
-    conv.json({
-      'fulfillmentText': `Sorry can't fetch your schedule`
+      conv.json({
+        'fulfillmentText': `Sorry can't fetch your schedule`
+      });
     });
-  });
 });
 
 function getMeetings(authToken) {
@@ -391,7 +400,7 @@ function getMeetings(authToken) {
         let events = '';
         let event_arr = response['upcoming']['events'];
         for (var i = 0; i < event_arr.length; i++)
-          events += event_arr[i]['app']['item_name'] +"@" + event_arr[i]['start'] + "\n";
+          events += event_arr[i]['app']['item_name'] + "@" + event_arr[i]['start'] + "\n";
 
         let output = `You have total ${response['upcoming']['total']} events and top 5 events are: \n${events}`;
         resolve(output);
