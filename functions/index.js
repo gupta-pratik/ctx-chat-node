@@ -168,19 +168,14 @@ app_sf.intent('SearchFile', async (conv, params) => {
     var arr = [];
 
     for (let i = 0; i < output["Results"].length ; i++) {
-      downloadFileSFContent(conv.user.access.token, output["Results"][i]["ItemID"]).then((url) => {
-        arr.push(
-          new BrowseCarouselItem({
-            title: output["Results"][i]["DisplayName"],
-            url: url,
-            description: `Creator name: ${output["Results"][i]["CreatorName"]} & Item Id:${output["Results"][i]["ItemID"]}`,
-          })
-        );
-      });
+      arr.push(
+        new BrowseCarouselItem({
+          title: output["Results"][i]["DisplayName"],
+          url: "https://sharefile.com",
+          description: `Creator name: ${output["Results"][i]["CreatorName"]} & Item Id:${output["Results"][i]["ItemID"]}`,
+        })
+      );
     }
-    console.log("outputArr[] ------------------>")
-    console.log(arr)
-    console.log("outputArr[]------------------>")
     conv.add(new BrowseCarousel({
       items: arr,
     }));
