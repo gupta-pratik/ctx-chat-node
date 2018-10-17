@@ -2,7 +2,9 @@
 
 const {
   dialogflow,
-  SignIn
+  SignIn,
+  BasicCard,
+  Button
 } = require('actions-on-google');
 const functions = require('firebase-functions');
 
@@ -20,7 +22,7 @@ var http = require('https');
 const axios = require('axios')
 
 const podio_host = 'api.podio.com';
-const sf_host = 'api.podio.com';
+const sf_host = 'cwprod.sharefile.com';
 
 app_podio.intent('Default Welcome Intent', (conv) => {
   conv.ask(new SignIn('To get your account details'));
@@ -51,38 +53,135 @@ function signIN(conv, params, signin){
     conv.ask(`I won't be able to save your data, but what do you want to do next?`);
   }
 }
-// app.intent('GetMeetingSchedule', (conv) => {
-//   console.log('Get Meeting Schdeule Intent Called');
-//   axios.get('https://api.podio.com/calendar/summary', {
-//       headers: {
-//         Authorization: 'OAuth2 ' + conv.user.access.token
-//       }
-//     })
-//     .then(response => {
-//       // If request is good...
-//       console.log(response.data);
-//     })
-//     .catch((error) => {
-//       console.log('error ' + error);
-//     });
-//   conv.json({
-//     'fulfillmentText': 'Prateek Test Response'
-//   });
-// })
 
-app_podio.intent('GetMeetingSchedule', (conv) => {
-  console.log('Get Meeting Schdeule Intent Called');
+app_sf.intent('DownloadContent', (conv) => {
+  return downloadSFContent(conv.user.access.token).then((output) => {
+    conv.ask('Here is your download link')
+    conv.add(new BasicCard({
+      text: 'Click here to download',
+      buttons: new Button({
+        title: 'Download',
+        url: `${output}`,
+      })
+    }));
+  });
+    
+});
 
-   return callAppointments(conv.user.access.token).then((output) => {
-    console.log(conv);
-    console.log('testing');
+function downloadSFContent(authToken) {
+  var item_id;
+  return getSFHome(authToken).then((response) => {
+    item_id = response['Id'];
+
+    let path = `/sf/v3/items(${item_id})/Download?includeallversions=false&includeDeleted=false&redirect=false`;
+    var options = {
+      hostname: sf_host,
+      path: path,
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + authToken
+      }
+    };
+    return new Promise((resolve, reject) => {
+      console.log('API Request: ' + sf_host + path);
+
+      // Make the HTTP request to get the weather
+      http.get(options, (res) => {
+        let body = ''; // var to store the response chunks
+        res.on('data', (d) => {
+          body += d;
+        }); // store each response chunk
+        res.on('end', () => {
+          // After all the data has been received parse the JSON for desired data
+          let response = JSON.parse(body);
+          // Resolve the promise with the output text
+          console.log(response)
+
+          let url = response['DownloadUrl'];
+        
+          let output = url;
+          resolve(output);
+        });
+        res.on('error', (error) => {
+          console.log(`Error calling the API: ${error}`);
+          reject();
+        });
+      });
+    });
+  })
+    .catch(() => {
+    return new Promise((resolve, reject) => { 
+      res.on('error', (error) => {
+        console.log(`Error calling the API: ${error}`);
+        reject();
+      });
+    });
+  });
+}
+
+app_sf.intent('GetHomeFolder', (conv) => {
+  console.log('testing')
+  return getSFHome(conv.user.access.token).then((response) => {
+    let folder_name = response['Name'];
+    
+    let output = `Parent folder name is ${folder_name}`;
     conv.json({
       'fulfillmentText': output
     }); // Return the results of the weather API to Dialogflow
   })
     .catch(() => {
     conv.json({
-      'fulfillmentText': `I don't know the weather but I hope it's good!`
+      'fulfillmentText': `Sorry can't fetch your parent folder`
+    });
+  });
+});
+
+function getSFHome(authToken) {
+  let path = '/sf/v3/Items';
+  var options = {
+    hostname: sf_host,
+    path: path,
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + authToken
+    }
+  };
+  return new Promise((resolve, reject) => {
+    console.log('API Request: ' + sf_host + path);
+
+    // Make the HTTP request to get the weather
+    http.get(options, (res) => {
+      let body = ''; // var to store the response chunks
+      res.on('data', (d) => {
+        body += d;
+      }); // store each response chunk
+      res.on('end', () => {
+        // After all the data has been received parse the JSON for desired data
+        let response = JSON.parse(body);
+        // Resolve the promise with the output text
+        console.log(response)
+
+        resolve(response);
+      });
+      res.on('error', (error) => {
+        console.log(`Error calling the API: ${error}`);
+        reject();
+      });
+    });
+  });
+}
+
+app_podio.intent('GetMeetingSchedule', (conv) => {
+  return callAppointments(conv.user.access.token).then((output) => {
+    conv.json({
+      'fulfillmentText': output
+    }); // Return the results of the weather API to Dialogflow
+  })
+    .catch(() => {
+    conv.json({
+      'fulfillmentText': `Sorry can't fetch your schedule`
     });
   });
 });
@@ -136,7 +235,7 @@ function callAppointments(authToken) {
         resolve(output);
       });
       res.on('error', (error) => {
-        console.log(`Error calling the weather API: ${error}`)
+        console.log(`Error calling the API: ${error}`);
         reject();
       });
     });
