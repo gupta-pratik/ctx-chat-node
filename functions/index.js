@@ -56,6 +56,52 @@ function signIN(conv, params, signin){
   }
 }
 
+app_sf.intent('Create Folder', (conv) => {
+  return createSFFolder(conv.user.access.token).then((output) => {
+    conv.add('Folder created')
+  }); 
+});
+
+
+function createSFFolder(authToken) {
+  var item_id;
+  return getSFHome(authToken).then((response) => {
+    item_id = response['Id'];
+
+    let path = `/sf/v3/items(${item_id})/Folder?overwrite=true&passthrough=false`;
+    var options = {
+      hostname: sf_host,
+      path: path,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + authToken
+      }
+    };
+    return new Promise((resolve, reject) => {
+      console.log('API Request: ' + sf_host + path);
+
+      // Make the HTTP request to get the weather
+      http.request(options, (res) => {
+        let body = ''; // var to store the response chunks
+        res.on('data', (d) => {
+          body += d;
+        }); // store each response chunk
+        res.on('end', () => {
+          // After all the data has been received parse the JSON for desired data
+
+          resolve();
+        });
+        res.on('error', (error) => {
+          console.log(`Error calling the API: ${error}`);
+          reject();
+        });
+      });
+    });
+  })
+
+}
+
 app_sf.intent('DownloadContent', (conv) => {
   return downloadSFContent(conv.user.access.token).then((output) => {
     conv.ask('Here is your download link')
