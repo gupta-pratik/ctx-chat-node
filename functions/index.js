@@ -1,31 +1,45 @@
 'use strict';
 
-const PODIO_ENDPOINT = '';
-
 const {
   dialogflow,
   SignIn
 } = require('actions-on-google');
 const functions = require('firebase-functions');
 
-const app = dialogflow({
+const app_podio = dialogflow({
   debug: true,
   clientId: 'podiovoiceassistant'
+});
+
+const app_sf = dialogflow({
+  debug: true,
+  clientId: 'sfagent-c96e9'
 });
 
 var http = require('https');
 const axios = require('axios')
 
-const host = 'api.podio.com';
+const podio_host = 'api.podio.com';
+const sf_host = 'api.podio.com';
 
-app.intent('Default Welcome Intent', (conv) => {
-  console.log('Prateek welcomeIntent');
+app_podio.intent('Default Welcome Intent', (conv) => {
+  conv.ask(new SignIn('To get your account details'));
+});
+
+app_sf.intent('Default Welcome Intent', (conv) => {
   conv.ask(new SignIn('To get your account details'));
 });
 
 // Create a Dialogflow intent with the `actions_intent_SIGN_IN` event
-app.intent('Get Sign In', (conv, params, signin) => {
-  console.log('Prateek signIn');
+app_podio.intent('Get Sign In', (conv, params, signin) => {
+  signIN(conv, params, signin);
+});
+
+app_sf.intent('Get Sign In', (conv, params, signin) => {
+  signIN(conv, params, signin);
+});
+
+function signIN(conv, params, signin){
   if (signin.status === 'OK') {
     console.log('userId', conv.user.raw.userId);
     console.log('P1');
@@ -36,8 +50,7 @@ app.intent('Get Sign In', (conv, params, signin) => {
     console.log('not signed in');
     conv.ask(`I won't be able to save your data, but what do you want to do next?`);
   }
-});
-
+}
 // app.intent('GetMeetingSchedule', (conv) => {
 //   console.log('Get Meeting Schdeule Intent Called');
 //   axios.get('https://api.podio.com/calendar/summary', {
@@ -57,7 +70,7 @@ app.intent('Get Sign In', (conv, params, signin) => {
 //   });
 // })
 
-app.intent('GetMeetingSchedule', (conv) => {
+app_podio.intent('GetMeetingSchedule', (conv) => {
   console.log('Get Meeting Schdeule Intent Called');
 
    return callAppointments(conv.user.access.token).then((output) => {
@@ -91,7 +104,7 @@ function callAppointments(authToken) {
   // Create the path for the HTTP request to get the weather
   let path = '/calendar/summary';
   var options = {
-    hostname: host,
+    hostname: podio_host,
     path: path,
     method: 'GET',
     headers: {
@@ -102,7 +115,7 @@ function callAppointments(authToken) {
   console.log('Auth Token: ' + authToken);
   return new Promise((resolve, reject) => {
 
-    console.log('API Request: ' + host + path);
+    console.log('API Request: ' + podio_host + path);
 
     // Make the HTTP request to get the weather
     http.get(options, (res) => {
@@ -132,4 +145,5 @@ function callAppointments(authToken) {
 
 
 
-exports.dialogflowFirebaseFulfillment = functions.https.onRequest(app);
+exports.dialogflowFirebaseFulfillment = functions.https.onRequest(app_podio);
+exports.dialogflowFirebaseFulfillment = functions.https.onRequest(app_sf);
