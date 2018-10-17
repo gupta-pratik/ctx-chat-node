@@ -4,7 +4,9 @@ const {
   dialogflow,
   SignIn,
   BasicCard,
-  Button
+  Button,
+  BrowseCarousel,
+  BrowseCarouselItem
 } = require('actions-on-google');
 const functions = require('firebase-functions');
 
@@ -68,6 +70,46 @@ app_sf.intent('DownloadContent', (conv) => {
     
 });
 
+async function downloadFileSFContent(authToken, item_id) {
+  let path = `/sf/v3/items(${item_id})/Download?includeallversions=false&includeDeleted=false&redirect=false`;
+  var options = {
+    hostname: sf_host,
+    path: path,
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + authToken
+    }
+  };
+  return new Promise((resolve, reject) => {
+    console.log('API Request: ' + sf_host + path);
+
+    // Make the HTTP request to get the weather
+    http.get(options, (res) => {
+      let body = ''; // var to store the response chunks
+      res.on('data', (d) => {
+        body += d;
+      }); // store each response chunk
+      res.on('end', () => {
+        // After all the data has been received parse the JSON for desired data
+        let response = JSON.parse(body);
+        // Resolve the promise with the output text
+        console.log(response)
+
+        let url = response['DownloadUrl'];
+      
+        let output = url;
+        resolve(output);
+      });
+      res.on('error', (error) => {
+        console.log(`Error calling the API: ${error}`);
+        reject();
+      });
+    });
+  });
+}
+
+
 function downloadSFContent(authToken) {
   var item_id;
   return getSFHome(authToken).then((response) => {
@@ -112,6 +154,69 @@ function downloadSFContent(authToken) {
   })
     .catch(() => {
     return new Promise((resolve, reject) => { 
+      res.on('error', (error) => {
+        console.log(`Error calling the API: ${error}`);
+        reject();
+      });
+    });
+  });
+}
+
+app_sf.intent('SearchFile', async (conv, params) => {
+  return searchSFContent(conv.user.access.token, params.any).then((output) => {
+    conv.ask('Top 3 results:');
+    var arr = [];
+
+    for (let i = 0; i < output["Results"].length ; i++) {
+      downloadFileSFContent(conv.user.access.token, output["Results"][i]["ItemID"]).then((url) => {
+        arr.push(
+          new BrowseCarouselItem({
+            title: output["Results"][i]["DisplayName"],
+            url: url,
+            description: `Creator name: ${output["Results"][i]["CreatorName"]} & Item Id:${output["Results"][i]["ItemID"]}`,
+          })
+        );
+      });
+    }
+    console.log("outputArr[] ------------------>")
+    console.log(arr)
+    console.log("outputArr[]------------------>")
+    conv.add(new BrowseCarousel({
+      items: arr,
+    }));
+  });
+});
+
+
+function searchSFContent(authToken, query) {
+  // Create the path for the HTTP request to get the weather
+  let path = encodeURI(`/sf/v3/Items/Search?query=${query}&homefolderonly=false&maxResumts=3`);
+  var options = {
+    hostname: sf_host,
+    path: path,
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + authToken
+    }
+  };
+
+  return new Promise((resolve, reject) => {
+
+    console.log('API Request: ' + sf_host + path);
+
+    // Make the HTTP request to get the weather
+    http.get(options, (res) => {
+      let body = ''; // var to store the response chunks
+      res.on('data', (d) => {
+        body += d;
+      }); // store each response chunk
+      res.on('end', () => {
+        // After all the data has been received parse the JSON for desired data
+        let response = JSON.parse(body);
+        // Resolve the promise with the output text
+        resolve(response);
+      });
       res.on('error', (error) => {
         console.log(`Error calling the API: ${error}`);
         reject();
@@ -174,7 +279,7 @@ function getSFHome(authToken) {
 }
 
 app_podio.intent('GetMeetingSchedule', (conv) => {
-  return callAppointments(conv.user.access.token).then((output) => {
+  return getMeetings(conv.user.access.token).then((output) => {
     conv.json({
       'fulfillmentText': output
     }); // Return the results of the weather API to Dialogflow
@@ -186,20 +291,7 @@ app_podio.intent('GetMeetingSchedule', (conv) => {
   });
 });
 
-  // try
-  // {
-  // var res = await axios.get('https://api.podio.com/calendar/summary');
-  // console.log(res.response);  
-  // conv.json({
-  //   'fulfillmentText': 'Prateek Test Response'
-  // });
-  // }
-  // catch(e){
-  // console.log('error ' + e);
-  // }
-
-
-function callAppointments(authToken) {
+function getMeetings(authToken) {
   // Create the path for the HTTP request to get the weather
   let path = '/calendar/summary';
   var options = {
