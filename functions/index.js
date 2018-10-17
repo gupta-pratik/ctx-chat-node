@@ -49,7 +49,7 @@ function signIN(conv, params, signin){
     console.log('P1');
     console.log(conv.user);
     console.log('P2');
-    conv.ask(`I got your account details. your userId is ${conv.user.raw.userId}. What do you want to do next?`);
+    conv.ask(`I got your account details. What do you want to do next?`);
   } else {
     console.log('not signed in');
     conv.ask(`I won't be able to save your data, but what do you want to do next?`);
@@ -122,6 +122,24 @@ app_sf.intent('DownloadContent', (conv) => {
   });
     
 });
+
+async function getDownloadUrl(authToken,item_id){
+  let path = 'https://'+sf_host+`/sf/v3/items(${item_id})/Download?includeallversions=false&includeDeleted=false&redirect=false`;
+  console.log('url:'+path);
+  const options = {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + authToken
+    },
+    url:path,
+  }
+  try {
+    return await axios(options)
+  } catch (error) {
+    console.error(error)
+  }
+}
 
 async function downloadFileSFContent(authToken, item_id) {
   let path = `/sf/v3/items(${item_id})/Download?includeallversions=false&includeDeleted=false&redirect=false`;
@@ -216,15 +234,19 @@ function downloadSFContent(authToken) {
 }
 
 app_sf.intent('SearchFile', async (conv, params) => {
-  return searchSFContent(conv.user.access.token, params.any).then((output) => {
+  return searchSFContent(conv.user.access.token, params.any).then(async (o) => {
     conv.ask('Top 3 results:');
+    console.log('---------Output-------');
+    console.log(o);
+    let output = o;
     var arr = [];
-
     for (let i = 0; i < output["Results"].length ; i++) {
+      var res = await getDownloadUrl(conv.user.access.token,output["Results"][i]["ItemID"]);
+      console.log('Download Url'+ res.data.DownloadUrl);
       arr.push(
         new BrowseCarouselItem({
           title: output["Results"][i]["DisplayName"],
-          url: "https://sharefile.com",
+          url: res.data.DownloadUrl,
           description: `Creator name: ${output["Results"][i]["CreatorName"]} & Item Id:${output["Results"][i]["ItemID"]}`,
         })
       );
